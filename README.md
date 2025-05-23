@@ -1,78 +1,204 @@
-# **General Layout**
+# 🐳 Docker Swarm Deployment Guide for Kronk
 
-- [ Manager Node ]
-    - ├─ Traefik (Ingress)
-    - ├─ Grafana (Dashboard)
-    - ├─ Prometheus (Metrics DB)
-    - └─ Loki (Logs DB)
+## 🗂️ General Layout
 
-- [ Worker Nodes ]
-    - ├─ Your app containers
-    - ├─ node-exporter
-    - ├─ cAdvisor
-    - ├─ promtail
+### [ Manager Node ]
 
-# **Init Docker Swarm**
+- Traefik (Ingress Controller)
+- Grafana (Dashboard)
+- Prometheus (Metrics DB)
+- Loki (Logs DB)
 
-`docker swarm init --advertise-addr manager_node_public_ip # change the ip here with your machine ip`
-**Get token again**
-`docker swarm join-token worker`
+### [ Worker Nodes ]
 
-**Adding worker nodes**
-`docker swarm join --token manager_node_public_ip`
+- FastAPI App Containers
+- node-exporter (System metrics)
+- cAdvisor (Container metrics)
+- promtail (Log shipping)
 
-# **Create a traefik network**
+---
 
-`docker network create --driver=overlay --attachable traefik-public`
-**or**
-`docker network create -d overlay traefik-public`
+## 🔧 1. Initialize Docker Swarm
 
-# **Don't forget to run this**
+On the **manager node**:
 
-`chmod 600 /mnt/data/traefik/acme.json`
+```bash
+docker swarm init --advertise-addr <MANAGER_NODE_PUBLIC_IP>
+```
 
-# **Then hash password for traefik admin UI**
+Get the worker token:
 
-`echo $(htpasswd -nB kamronbek) | docker secret create traefik_auth -`
+```bash
+docker swarm join-token worker
+```
 
-# **Create a volume for Portainer**
+Use the printed command to add worker nodes:
 
-`docker volume create portainer_data`
+```bash
+docker swarm join --token <TOKEN> <MANAGER_NODE_PUBLIC_IP>:2377
+```
 
-## -------------------------------------------------------------------------------
+---
 
-## **docker node ls**
+## 🔐 2. Create Secrets (on Manager Node)
 
-## **docker service create --replicas 2 -p 80:80 nginx**
+```bash
+# Database URLs
+ echo "postgresql+asyncpg://kamronbek:kamronbek2003@<postgres_vps_ip>:5432/<postgres_db>" | docker secret create db_url -
+ echo "redis://default:<redis_password>@<redis_vps_ip>:6379" | docker secret create redis_url -
 
-## **docker service rm ID**
+# Monitoring (Grafana)
+ echo "kamronbek2003" | docker secret create gf_security_admin_password -
 
-## **docker stack deploy -c docker-compose.yml medium**
+# Redis/Postgres credentials
+ echo "kamronbek" | docker secret create postgres_user -
+ echo "dev_db" | docker secret create postgres_db -
+ echo "kamronbek2003" | docker secret create redis_password -
 
-## -------------------------------------------------------------------------------
+# Traefik Admin UI
+ echo "kamronbek" | docker secret create traefik_username -
+ echo "kamronbek2003" | docker secret create traefik_password -
 
-## **Backend**
+# Traefik Auth (hashed password)
+ echo "$(htpasswd -nB kamronbek)" | docker secret create traefik_auth -
+```
 
-`echo "postgresql+asyncpg://kamronbek:kamronbek2003@<postgres_vps_ip>:5432/<postgres_db>" | docker secret create db_url -`
-`echo "redis://default:<redis_password>@<redis_vps_ip>:6379" | docker secret create redis_url -`
+---
 
-## **Monitoring**
+## 🌐 3. Create Overlay Network
 
-`echo "kamronbek2003" | docker secret create gf_security_admin_password -`
+```bash
+docker network create --driver=overlay --attachable traefik-public
+```
 
-## **Redis and Postgres VPS**
+---
 
-`echo "kamronbek" | docker secret create postgres_user -`
-`echo "dev_db" | docker secret create postgres_db -`
-`echo "kamronbek2003" | docker secret create redis_password -`
+## 🔒 4. Set Permissions on ACME File (TLS Certs)
 
-## **Traefik admin UI**
+```bash
+chmod 600 cluster/swarm/traefik/config/acme.json
+```
 
-`echo "kamronbek" | docker secret create traefik_username -`
-`echo "kamronbek2003" | docker secret create traefik_password -`
+---
 
-## `docker stack deploy -c <traefik-compose> traefik-stack`
+## 📦 5. Deploying Services (From Your Local Machine)
 
-## `docker stack deploy -c <traefik-compose> backend-stack`
+Ensure you are using the right context:
 
+```bash
+docker context use dev-kronk
+```
 
+### 🛡️ Traefik
+
+```bash
+docker stack deploy -c cluster/swarm/traefik/traefik.yml traefik-stack
+```
+
+### 🧠 Backend
+
+```bash
+docker stack deploy -c cluster/swarm/backend/backend_stack.yml backend-stack
+```
+
+### 📊 Monitoring
+
+```bash
+docker stack deploy -c cluster/swarm/monitoring/portainer.yml monitoring-stack
+```
+
+Add others similarly:
+
+```bash
+docker stack deploy -c cluster/swarm/monitoring/grafana.yml monitoring-stack
+```
+
+---
+
+## 🧪 6. Useful Commands
+
+- List stacks:
+  ```bash
+  docker stack ls
+  ```
+
+- List services:
+  ```bash
+  docker service ls
+  ```
+
+- Remove a service:
+  ```bash
+  docker service rm <SERVICE_ID>
+  ```
+
+- Check nodes:
+  ```bash
+  docker node ls
+  ```
+
+- Check logs:
+  ```bash
+  docker service logs <SERVICE_NAME>
+  ```
+
+- Run a test service:
+  ```bash
+  docker service create --replicas 2 -p 80:80 nginx
+  ```
+
+---
+
+## 🌍 7. Access Services via Subdomains (Traefik)
+
+Make sure DNS A records point to your **manager node IP**:
+
+- `https://traefik.kronk.uz`
+- `https://grafana.kronk.uz`
+- `https://prometheus.kronk.uz`
+- `https://portainer.kronk.uz`
+
+---
+
+## 🗃️ Project Structure Overview
+
+```plaintext
+~/Documents/deployment
+├── cluster
+│   └── swarm
+│       ├── backend
+│       │   └── backend_stack.yml
+│       ├── monitoring
+│       │   ├── alertmanager/
+│       │   ├── grafana.yml
+│       │   ├── loki/
+│       │   ├── prometheus/
+│       │   └── promtail.yml
+│       └── traefik
+│           ├── config/
+│           └── traefik.yml
+├── pod
+│   └── FastAPI source code & Dockerfile
+├── service
+│   ├── configurations
+│   └── docker-compose.yml
+└── README.md
+```
+
+---
+
+## 🧠 Docker Context Info
+
+```bash
+docker context ls
+```
+
+Example:
+
+```plaintext
+NAME        DESCRIPTION                               DOCKER ENDPOINT               ERROR
+default *   Current DOCKER_HOST based configuration   unix:///var/run/docker.sock   
+dev-kronk                                             ssh://root@178.212.35.106     
+```
+
+Now you’re ready to manage, deploy, and teach Docker Swarm workflows! 🚀

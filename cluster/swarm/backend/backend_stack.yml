@@ -1,6 +1,6 @@
 services:
   fastapi:
-    image: kamronbekdev/fastapi:v1
+    image: kamronbekdev/fastapi:v1.0
     #    ports:
     #      - "8000:8000"
     networks:
