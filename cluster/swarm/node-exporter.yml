@@ -1,0 +1,34 @@
+# docker stack deploy -c node-exporter.yml monitoring
+
+services:
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+    ports:
+      - mode: host
+        target: 9100
+        published: 9100
+    volumes:
+      - type: bind
+        source: /proc
+        target: /host/proc
+        read_only: true
+      - type: bind
+        source: /sys
+        target: /host/sys
+        read_only: true
+      - type: bind
+        source: /
+        target: /rootfs
+        read_only: true
+    networks:
+      traefik-public:
+    deploy:
+      mode: global
+
+
+networks:
+  traefik-public:
+    external: true

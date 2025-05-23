@@ -1,0 +1,134 @@
+# docker stack deploy -c monitoring.yml monitoring
+# docker stack ps monitoring
+
+services:
+  portainer:
+    image: portainer/portainer-ee:lts
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-storage:/data
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.portainer_router.rule=Host(`portainer.kronk.uz`)"
+        - "traefik.http.routers.portainer_router.entrypoints=web,websecure"
+        - "traefik.http.services.portainer_service.loadbalancer.server.port=9000"
+        - "traefik.http.routers.portainer_router.tls=true"
+        - "traefik.http.routers.portainer_router.tls.certresolver=letsencrypt_resolver"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          cpus: 0.2
+          memory: 200M
+      update_config:
+        order: stop-first
+        parallelism: 1
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - "-config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - traefik-public
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.prometheus_router.rule=Host(`prometheus.kronk.uz`)"
+        - "traefik.http.routers.prometheus_router.entrypoints=web,websecure"
+        - "traefik.http.services.prometheus_service.loadbalancer.server.port=9090"
+        - "traefik.http.routers.prometheus_router.tls=true"
+        - "traefik.http.routers.prometheus_router.tls.certresolver=letsencrypt_resolver"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          cpus: 0.2
+          memory: 200M
+      update_config:
+        order: stop-first
+        parallelism: 1
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml
+    networks:
+      - traefik-public
+    command:
+      - "-config.file=/etc/alertmanager/config.yml"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: 0.2
+          memory: 200M
+      update_config:
+        order: stop-first
+        parallelism: 1
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - traefik-public
+    secrets:
+      - gf_security_admin_password
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: /run/secrets/gf_security_admin_password
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana_router.rule=Host(`grafana.kronk.uz`)"
+        - "traefik.http.routers.grafana_router.entrypoints=web,websecure"
+        - "traefik.http.services.grafana_service.loadbalancer.server.port=9090"
+        - "traefik.http.routers.grafana_router.tls=true"
+        - "traefik.http.routers.grafana_router.tls.certresolver=letsencrypt_resolver"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          cpus: 0.2
+          memory: 200M
+      update_config:
+        order: stop-first
+        parallelism: 1
+    depends_on:
+      - prometheus
+
+volumes:
+  portainer-storage:
+  grafana-storage:
+
+networks:
+  traefik-public:
+    external: true
+    driver: overlay
+
+secrets:
+  gf_security_admin_password:
+    external: true
+

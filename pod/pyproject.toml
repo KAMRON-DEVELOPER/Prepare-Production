@@ -1,0 +1,15 @@
+[project]
+name = "kronk"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "fastapi",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "pydantic-settings>=2.9.1",
+    "redis>=6.1.0",
+    "sqlalchemy>=2.0.41",
+    "uvicorn",
+]

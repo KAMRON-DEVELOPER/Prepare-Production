@@ -1,0 +1,48 @@
+services:
+  fastapi:
+    image: kamronbekdev/fastapi:v1
+    ports:
+      - "8000:8000"
+    networks:
+      - traefik-public
+    secrets:
+      - db_url
+      - redis_url
+    environment:
+      DB_URL: /run/secrets/db_url
+      REDIS_URL: /run/secrets/redis_url
+    deploy:
+      labels:
+        - "prometheus-job=fastapi"
+        - "traefik.enable=true"
+        - "traefik.http.routers.fastapi_router.rule=Host(`api.kronk.uz`)"
+        - "traefik.http.routers.fastapi_router.entrypoints=web,websecure"
+        - "traefik.http.services.fastapi_service.loadbalancer.server.port=8000"
+        - "traefik.http.routers.fastapi_router.tls=true"
+        - "traefik.http.routers.fastapi_router.tls.certresolver=letsencrypt_resolver"
+        - "traefik.http.middlewares.fastapi_middleware.redirectscheme.scheme=https"
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.hostname=api.kronk.uz"
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.interval=10s"
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.path=/healthcheck"
+        - "traefik.http.services.fastapi_service.loadbalancer.strategy=p2c"
+      resources:
+        reservations:
+          cpus: 1
+          memory: 500M
+        limits:
+          cpus: 2.5
+          memory: 7G
+      update_config:
+        order: stop-first
+        parallelism: 1
+
+networks:
+  traefik-public:
+    external: true
+    driver: overlay
+
+secrets:
+  db_url:
+    external: true
+  redis_url:
+    external: true

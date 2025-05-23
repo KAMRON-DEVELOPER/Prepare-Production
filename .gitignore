@@ -1,0 +1,4 @@
+.idea
+pod/.venv
+**.env
+**.venv
