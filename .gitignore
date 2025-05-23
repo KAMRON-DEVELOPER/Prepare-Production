@@ -2,3 +2,4 @@
 pod/.venv
 **.env
 **.venv
+**.idea
