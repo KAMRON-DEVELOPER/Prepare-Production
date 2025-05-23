@@ -12,6 +12,7 @@ services:
       DB_URL: /run/secrets/db_url
       REDIS_URL: /run/secrets/redis_url
     deploy:
+      replicas: 4
       labels:
         - "prometheus-job=fastapi"
         - "traefik.enable=true"
@@ -28,14 +29,10 @@ services:
         - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.interval=60s" # default: 30s
         # - "traefik.http.routers.fastapi_router.tls=true"
         # - "traefik.http.routers.fastapi_router.tls.certresolver=leresolver"
-
       resources:
-        reservations:
-          cpus: 1
-          memory: 500M
         limits:
-          cpus: 2.5
-          memory: 7G
+          cpus: 1
+          memory: 512M
       update_config:
         order: stop-first
         parallelism: 1

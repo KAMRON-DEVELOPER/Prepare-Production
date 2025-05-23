@@ -1,0 +1,41 @@
+version: "3.8"
+
+
+services:
+  portainer:
+    image: portainer/portainer-ee:lts
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_storage:/data
+    networks:
+      - monitoring-network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.portainer_router.rule=Host(`portainer.kronk.uz`)"
+        - "traefik.http.routers.portainer_router.entrypoints=http,https"
+        - "traefik.http.routers.portainer_router.tls.certresolver=leresolver"
+        - "traefik.http.routers.portainer_router.service=portainer_service"
+        - "traefik.http.services.portainer_service.loadbalancer.server.port=9443"
+        - "traefik.http.middlewares.portainer_middleware.redirectscheme.scheme=https"
+        # - "traefik.http.routers.portainer_router.middlewares=portainer_middleware"
+        - "traefik.http.middlewares.portainer_middleware.redirectscheme.permanent=true"
+
+        # - "traefik.http.routers.portainer_router.tls=true"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      resources:
+        limits:
+          cpus: 1
+          memory: 1G
+
+volumes:
+  portainer_storage:
+
+networks:
+  monitoring-network:
+    external: true
+    driver: overlay

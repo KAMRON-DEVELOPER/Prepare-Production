@@ -27,7 +27,7 @@ async def entity() -> dict:
     await cache_manager.incr()
     return {
         "message": "Kronk Deployment!",
-        "DATABASE_URL": settings.DATABASE_URL,
+        "DB_URL": settings.DB_URL,
         "REDIS_URL": settings.REDIS_URL,
         "Total visits": await cache_manager.total_visits()
     }

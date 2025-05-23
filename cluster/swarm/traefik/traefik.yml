@@ -33,8 +33,8 @@ services:
     #   mode: host
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/acme.json:/letsencrypt/acme.json"
-      - "./traefik/traefik.log:/log/access/access.log"
+      - "./config/acme.json:/letsencrypt/acme.json"
+      - "./config/traefik.log:/log/access/access.log"
     networks:
       - traefik-public
     secrets:
@@ -49,10 +49,10 @@ services:
         - "traefik.http.routers.traefik_route.rule=Host(`traefik.kronk.uz`)"
         - "traefik.http.services.traefik_service.loadbalancer.server.port=8080"
         - "traefik.http.routers.traefik_route.entrypoints=http,https"
-        - "traefik.http.routers.traefik_route.middlewares=redirect-to-https"
         - "traefik.http.middlewares.traefik_route.redirectscheme.scheme=https"
-        - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
-        - "traefik.http.routers.traefik-public-https.tls=true"
+        - "traefik.http.middlewares.traefik_middleware.redirectscheme.permanent=true"
+        # - "traefik.http.routers.traefik_route.middlewares=traefik_middleware"
+        - "traefik.http.routers.traefik_route.tls=true"
         - "traefik.http.routers.traefik_route.tls.certresolver=leresolver"
         - "traefik.http.routers.traefik.middlewares=auth"
         - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USERNAME?Variable not set}:${TRAEFIK_PASSWORD?Variable not set}"
@@ -68,6 +68,7 @@ services:
 networks:
   traefik-public:
     external: true
+    driver: overlay
 
 secrets:
   traefik_username:

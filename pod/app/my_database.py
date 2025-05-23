@@ -1,15 +1,14 @@
 import asyncio
-from typing import Annotated, AsyncGenerator, Optional
-
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-
+from typing import Annotated, AsyncGenerator
 from uuid import UUID, uuid4
 
+from fastapi import Depends
 from sqlalchemy import TIMESTAMP, String, func, UUID as PG_UUID
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from app.my_config import get_settings
+
 
 class Base(DeclarativeBase):
     pass
@@ -24,7 +23,11 @@ class BaseModel(Base):
 
 settings = get_settings()
 
-async_engine: AsyncEngine = create_async_engine(settings.DATABASE_URL, echo=False)
+# Use get_secret_value() for Pydantic SecretStr
+if not settings.DB_URL:
+    raise ValueError("DB_URL must be set")
+
+async_engine: AsyncEngine = create_async_engine(settings.DB_URL, echo=False)
 async_session = async_sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
 
@@ -39,11 +42,10 @@ DBSession = Annotated[AsyncSession, Depends(get_session)]
 async def init_db():
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
-        
+
 
 class UserModel(BaseModel):
-    __tablename__ = "user_table"
+    __tablename__ = "user_table_extra"
     username: Mapped[str] = mapped_column(String(length=50), index=True)
     email: Mapped[str] = mapped_column(String(length=50), index=True)
     password: Mapped[str] = mapped_column(String(length=120))
