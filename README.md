@@ -23,13 +23,17 @@
 
 # **Create a traefik network**
 
-`docker network create --driver=overlay traefik-public`
+`docker network create --driver=overlay --attachable traefik-public`
 **or**
 `docker network create -d overlay traefik-public`
 
 # **Don't forget to run this**
 
 `chmod 600 /mnt/data/traefik/acme.json`
+
+# **Then hash password for traefik admin UI**
+
+`echo $(htpasswd -nB kamronbek) | docker secret create traefik_auth -`
 
 # **Create a volume for Portainer**
 
@@ -47,14 +51,25 @@
 
 ## -------------------------------------------------------------------------------
 
-`echo "kamronbek2003" | docker secret create db_url -`
-`echo "kamronbek2003" | docker secret create redis_url -`
+## **Backend**
+
+`echo "postgresql+asyncpg://kamronbek:kamronbek2003@<postgres_vps_ip>:5432/<postgres_db>" | docker secret create db_url -`
+`echo "redis://default:<redis_password>@<redis_vps_ip>:6379" | docker secret create redis_url -`
+
+## **Monitoring**
+
 `echo "kamronbek2003" | docker secret create gf_security_admin_password -`
 
 ## **Redis and Postgres VPS**
+
 `echo "kamronbek" | docker secret create postgres_user -`
 `echo "dev_db" | docker secret create postgres_db -`
 `echo "kamronbek2003" | docker secret create redis_password -`
+
+## **Traefik admin UI**
+
+`echo "kamronbek" | docker secret create traefik_username -`
+`echo "kamronbek2003" | docker secret create traefik_password -`
 
 ## `docker stack deploy -c <traefik-compose> traefik-stack`
 

@@ -1,15 +1,10 @@
-# docker stack deploy -c monitoring.yml monitoring
-# docker stack ps monitoring
-
 services:
   portainer:
     image: portainer/portainer-ee:lts
     command: -H unix:///var/run/docker.sock
-    ports:
-      - "9443:9443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer-storage:/data
+      - portainer_storage:/data
     networks:
       - traefik-public
     deploy:
@@ -18,19 +13,17 @@ services:
         - "traefik.http.routers.portainer_router.rule=Host(`portainer.kronk.uz`)"
         - "traefik.http.routers.portainer_router.entrypoints=web,websecure"
         - "traefik.http.services.portainer_service.loadbalancer.server.port=9000"
-        - "traefik.http.routers.portainer_router.tls=true"
-        - "traefik.http.routers.portainer_router.tls.certresolver=letsencrypt_resolver"
+        - "traefik.http.routers.frontend.service=portainer_service"
+        - "traefik.http.routers.portainer_router.tls.certresolver=leresolver"
+        # - "traefik.http.routers.portainer_router.tls=true"
       mode: replicated
       replicas: 1
       placement:
         constraints: [ node.role == manager ]
       resources:
         limits:
-          cpus: 0.2
-          memory: 200M
-      update_config:
-        order: stop-first
-        parallelism: 1
+          cpus: 1
+          memory: 1000M
 
   prometheus:
     image: prom/prometheus:latest
@@ -56,8 +49,8 @@ services:
         constraints: [ node.role == manager ]
       resources:
         limits:
-          cpus: 0.2
-          memory: 200M
+          cpus: 1.0
+          memory: 2G
       update_config:
         order: stop-first
         parallelism: 1
@@ -81,16 +74,13 @@ services:
         limits:
           cpus: 0.2
           memory: 200M
-      update_config:
-        order: stop-first
-        parallelism: 1
 
   grafana:
     image: grafana/grafana
     ports:
       - "3000:3000"
     volumes:
-      - grafana-storage:/var/lib/grafana
+      - grafana_storage:/var/lib/grafana
     networks:
       - traefik-public
     secrets:
@@ -102,7 +92,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.grafana_router.rule=Host(`grafana.kronk.uz`)"
         - "traefik.http.routers.grafana_router.entrypoints=web,websecure"
-        - "traefik.http.services.grafana_service.loadbalancer.server.port=9090"
+        - "traefik.http.services.grafana_service.loadbalancer.server.port=3000"
         - "traefik.http.routers.grafana_router.tls=true"
         - "traefik.http.routers.grafana_router.tls.certresolver=letsencrypt_resolver"
       mode: replicated
@@ -111,17 +101,12 @@ services:
         constraints: [ node.role == manager ]
       resources:
         limits:
-          cpus: 0.2
-          memory: 200M
-      update_config:
-        order: stop-first
-        parallelism: 1
-    depends_on:
-      - prometheus
+          cpus: 0.5
+          memory: 512M
 
 volumes:
-  portainer-storage:
-  grafana-storage:
+  portainer_storage:
+  grafana_storage:
 
 networks:
   traefik-public:
@@ -131,4 +116,3 @@ networks:
 secrets:
   gf_security_admin_password:
     external: true
-

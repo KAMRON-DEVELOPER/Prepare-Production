@@ -1,8 +1,8 @@
 services:
   fastapi:
     image: kamronbekdev/fastapi:v1
-    ports:
-      - "8000:8000"
+    #    ports:
+    #      - "8000:8000"
     networks:
       - traefik-public
     secrets:
@@ -16,15 +16,19 @@ services:
         - "prometheus-job=fastapi"
         - "traefik.enable=true"
         - "traefik.http.routers.fastapi_router.rule=Host(`api.kronk.uz`)"
-        - "traefik.http.routers.fastapi_router.entrypoints=web,websecure"
-        - "traefik.http.services.fastapi_service.loadbalancer.server.port=8000"
-        - "traefik.http.routers.fastapi_router.tls=true"
-        - "traefik.http.routers.fastapi_router.tls.certresolver=letsencrypt_resolver"
+        - "traefik.http.routers.fastapi_router.entrypoints=http,https"
+        - "traefik.http.routers.fastapi_router.tls.certresolver=leresolver"
+        - "traefik.http.routers.fastapi_router.service=fastapi_service"
+        - "traefik.http.services.fastapi_service.loadbalancer.server.port=8000" # in swarm mode we must define explicitly
         - "traefik.http.middlewares.fastapi_middleware.redirectscheme.scheme=https"
-        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.hostname=api.kronk.uz"
-        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.interval=10s"
-        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.path=/healthcheck"
-        - "traefik.http.services.fastapi_service.loadbalancer.strategy=p2c"
+        # - "traefik.http.routers.fastapi_router.middlewares=fastapi_middleware"
+        - "traefik.http.middlewares.fastapi_middleware.redirectscheme.permanent=true"
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.hostname=api.kronk.uz" # optional
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.path=/healthy" # required
+        - "traefik.http.services.fastapi_service.loadbalancer.healthcheck.interval=60s" # default: 30s
+        # - "traefik.http.routers.fastapi_router.tls=true"
+        # - "traefik.http.routers.fastapi_router.tls.certresolver=leresolver"
+
       resources:
         reservations:
           cpus: 1

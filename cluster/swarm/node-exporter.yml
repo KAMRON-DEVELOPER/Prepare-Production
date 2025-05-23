@@ -1,5 +1,3 @@
-# docker stack deploy -c node-exporter.yml monitoring
-
 services:
   node-exporter:
     image: prom/node-exporter:latest
@@ -27,7 +25,6 @@ services:
       traefik-public:
     deploy:
       mode: global
-
 
 networks:
   traefik-public:
