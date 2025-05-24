@@ -61,6 +61,7 @@ docker swarm join --token <TOKEN> <MANAGER_NODE_PUBLIC_IP>:2377
 
 # Traefik Auth (hashed password)
  echo "$(htpasswd -nB kamronbek)" | docker secret create traefik_auth -
+ echo "$(htpasswd -nbB kamronbek kamronbek2003)" | docker secret create traefik_user_credentials -
 ```
 
 ---

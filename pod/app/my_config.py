@@ -1,21 +1,17 @@
+import os
 from functools import lru_cache
-from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if not os.path.exists('/run/secrets'):
+    os.makedirs(name="/run/secrets", exist_ok=True)
 
 
 class Settings(BaseSettings):
     DB_URL: str = ""
     REDIS_URL: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore") # secrets_dir="/run/secrets"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        print(f"Loaded DB_URL: {self.DB_URL}")
-        print(f"Loaded REDIS_URL: {self.REDIS_URL}")
-        print(f"Current working directory: {Path.cwd()}")
-        print(f"Trying env files: {self.model_config['env_file']}")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore", secrets_dir=("/run/secrets",))
 
 
 # def get_secrets():

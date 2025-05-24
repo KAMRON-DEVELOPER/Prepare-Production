@@ -27,6 +27,9 @@ settings = get_settings()
 if not settings.DB_URL:
     raise ValueError("DB_URL must be set")
 
+if not settings.REDIS_URL:
+    raise ValueError("REDIS_URL must be set")
+
 async_engine: AsyncEngine = create_async_engine(settings.DB_URL, echo=False)
 async_session = async_sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
