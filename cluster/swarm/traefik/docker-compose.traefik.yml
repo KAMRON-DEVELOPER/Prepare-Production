@@ -7,7 +7,7 @@ services:
       - "--api.dashboard=true"
       - "--providers.swarm=true"
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock" # Default
-      # -- "--providers.swarm.network=traefik-public" # This option can be overridden on a per-container basis with the 'traefik.docker.network'
+      - "--providers.swarm.network=traefik-network" # This option can be overridden on a per-container basis with the 'traefik.docker.network'
       # - "--traefik.swarm.lbswarm=true" # If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs
       # - "--providers.swarm.constraints=Label(`a.label.name`,`foo`)" $ If none of the container labels match the expression, no route for that container is created.
       # - "--providers.swarm.tls=false/true"
@@ -38,12 +38,12 @@ services:
       - "./config/acme.json:/letsencrypt/acme.json"
       - "./config/access.log:/log/access/access.log"
     networks:
-      - traefik-public
+      - traefik-network
     secrets:
       - traefik_user_credentials
     # environment:
     #   TRAEFIK_USER_CREDENTIALS: traefik_user_credentials
-      # TRAEFIK_USER_CREDENTIALS: /run/secrets/traefik_user_credentials
+    # TRAEFIK_USER_CREDENTIALS: /run/secrets/traefik_user_credentials
     deploy:
       labels:
         - "traefik.enable=true"
@@ -80,14 +80,14 @@ services:
       mode: replicated
       replicas: 1
       placement:
-        constraints: [ node.role == manager ]
+        constraints: [node.role == manager]
       resources:
         limits:
           cpus: "1.0"
           memory: 2G
 
 networks:
-  traefik-public:
+  traefik-network:
     external: true
     driver: overlay
 

@@ -1,10 +1,12 @@
 services:
   fastapi:
-    image: kamronbekdev/fastapi:v1.0
-    #    ports:
-    #      - "8000:8000"
+    image: kamronbekdev/fastapi:v2.0
+    ports:
+      - mode: ingress
+        target: 8000
+        published: 8000
     networks:
-      - traefik-public
+      - traefik-network
     secrets:
       - DB_URL
       - REDIS_URL
@@ -17,7 +19,7 @@ services:
         constraints:
           - node.role == worker
       labels:
-        # - "prometheus-job=fastapi"
+        - "prometheus-job=fastapi"
 
         - "traefik.enable=true"
 
@@ -52,7 +54,7 @@ services:
         parallelism: 1
 
 networks:
-  traefik-public:
+  traefik-network:
     external: true
     driver: overlay
 
