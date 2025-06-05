@@ -42,6 +42,58 @@ docker swarm join --token <TOKEN> <MANAGER_NODE_PUBLIC_IP>:2377
 
 ## 🔐 2. Create Secrets (on Manager Node)
 
+# 🐳 Docker Secrets Creation Guide for Kronk Backend
+
+This guide contains all the commands needed to create Docker secrets for your backend services.
+
+## 🔐 Secrets Creation
+
+```bash
+echo './' | docker secret create pythonpath_env -
+
+# POSTGRES
+echo 'postgresql+asyncpg://kamronbek:kamronbek2003@localhost:5432/dev_db' | docker secret create database_url -
+
+# REDIS
+echo 'redis://default:kamronbek2003@localhost:6379' | docker secret create redis_url -
+echo 'redis://default:kamronbek2003@localhost:6379/0?decode_responses=True&protocol=3' | docker secret create redis_url_old -
+echo 'redis://default:kamronbek2003@localhost:6379/1' | docker secret create taskiq_worker_url -
+echo 'redis://default:kamronbek2003@localhost:6379/2' | docker secret create taskiq_redis_schedule_source_url -
+echo 'redis://default:kamronbek2003@localhost:6379/3' | docker secret create taskiq_scheduler_url -
+
+# MINIO
+echo 'kamronbek' | docker secret create minio_root_user -
+echo 'kamronbek2003' | docker secret create minio_root_password -
+echo 'localhost:9000' | docker secret create minio_endpoint -
+echo 'dev-bucket' | docker secret create minio_bucket_name -
+
+# FASTAPI-JWT
+echo 'f94b638b565c503932b657534d1f044b7f1c8acfb76170e80851704423a49186' | docker secret create secret_key -
+echo 'HS256' | docker secret create algorithm -
+echo '60' | docker secret create access_token_expire_time -
+echo '7' | docker secret create refresh_token_expire_time -
+
+# EMAIL
+echo 'wSsVR61z+0b3Bq9+mzWtJOc+yAxSUgv1HEx93Qaoun79Sv7KosduxECdBw/1HPBLGDNpQWAU9bN/yx0C0GUN2dh8mVAGDSiF9mqRe1U4J3x17qnvhDzIWWtYlxGNLIkLzwlumWdiEssi+g==' | docker secret create email_service_api_key -
+
+# FIREBASE
+echo 'service_account' | docker secret create firebase_type -
+echo 'kronk-dev-2' | docker secret create firebase_project_id -
+echo '2e8a8280dd807ef3422ae152fc72342b3a1ea8ec' | docker secret create firebase_private_key_id -
+echo -e '-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDZvDybrhISTiym\\nxebJ9EqAkv/BeJ4VmNNJIIoDI03JcUERjksermDq/zX2tHtisJc1ynT7mBhFtpQ3\\noAxHF3dnC5b4ZKHbhNNmSpReT1nRc8b/A98nIS5LEY01NWmGL9EitgSUSFtV2D14\\nQqZhI05C6hKVfrupEuYWko7mRHV5b5yczksXTtZSIkOP3rHs9AVFBkXe9eraS7w1\\n5DzcLf8sQo4qjpciffLqMsl2MtBsYgVx4iJyYTYKJ2meoMlolEiBqJS9J401KwoH\\n3J529JwvlFsVmcLbE5/BcCtiR8lA9MqeNfh2jtMaP/HlmcV12GYflO01ywhmegf+\\nZNie544DAgMBAAECggEAHp3tCdki2mcauULHzqsm1MiW5R4wYIoSX8yPC5zpwcNG\\nqpDPOFu97h1/+ZZsaTa6tIopA/3hn9/qHJ5JS6/djuRe0MPZzLPzRAWFsnNHBoBY\\nwaBKP0bXqx+nMw21LnTH3DErGKzKBxq2nhQFMFCWHyup/FKLUd2B9Decl32V5ULN\\nnQktoFHRowZ9jms3ZtKx+CwIt1CG0MrLpV4O2s9jcVlJC005Vjtw2HEgSPOmRnxB\\nGt3uthghBnuAqy8k2qMsCSiokvjcenAmL1rJBX4gURqSD72qL1YFPYQvlnckK7tB\\nt/bYoDFhvyuVZjoG9OwDyUVi8SH/GqxFWsBVR2yUtQKBgQDzt0oJiz9EaPXQNxnt\\nfyciVKFfdr/YXE9XInyVKXkZM+El3dXp7jWTWDtjs3uCi55AovZhmrWYa7aXxOSN\\n4O3Kh8i6jtdbpn7nYxbdEdBQhDLvntTYXkfdVROuYIUWwTl3vgRQDdmnZS8cuKyD\\n6FmRD8EhTooi/iJZAMC4sodkhQKBgQDktbbZ/Gpo0NJRg5xPz3SqTP8M5kRRw7V2\\nTu4kbkP/DGAQJ1Kx6f5Bi0W6kY/58Gri7nol0cWO6BxPmidZMLpuzKT0JqJTDQJR\\nMA8DSzEbbKFZZhTaWQKw3aIkWFeataOy5xFK4AT/BdpFs2T6zN/qQ2wsgVjOuJmv\\ntmHNAkiS5wKBgQDLJtzDSdxKBQfqMRQewV/4oP0HG3BdRM0p/+hDWhfEp1ck/l6C\\nqfrkwKZ4vDLXJdSbYnvn7lMzI45HwmsVzQnKShdLUyg3EHk2HYYAbwnrI9dloEsh\\ntK1I1NMcBv7JcfWaV702keT9QT3dPh8nsTV/0tcVEWfaNWaiNBtxmfd8FQKBgD4T\\nhDnOZSNl6m/thPO0nznKBEAAD/MRZ6Ng8Qo6U4JaXYiE49EebcBkiNyGvcldE+Xc\\nTJMPSMvs/CIu+RcgPrnsGambAtv/3+0hWjHOqtmCtpiJOIe7ORvATE4JHF4FhxT7\\n2pm0DCcb846Pjoz0JqJzAl1iDjStrikfG5SFViVpAoGBAOTGAQpaILeHRvpSUWfe\\nbOcG6decAni/RetJ0Pkc1ZfoJBP8JOxxONdUvzBO5S1uPPlpLt/rF/SpLDtcZ/D3\\nSpBMT9pCDwvxokXHwqHcDI3cMpS4IN8PxQPix2nMQ4KCmLoqsjsJEy78jyD81Ox6\\nevNMbqc8R3N75mdfHchxxdyS\\n-----END PRIVATE KEY-----' | docker secret create firebase_private_key -
+
+echo 'firebase-adminsdk-wbkf7@kronk-dev-2.iam.gserviceaccount.com' | docker secret create firebase_client_email -
+echo '110999035518165526815' | docker secret create firebase_client_id -
+echo 'https://accounts.google.com/o/oauth2/auth' | docker secret create firebase_auth_uri -
+echo 'https://oauth2.googleapis.com/token' | docker secret create firebase_token_uri -
+echo 'https://www.googleapis.com/oauth2/v1/certs' | docker secret create firebase_auth_provider_x509_cert_uri -
+echo 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-wbkf7%40kronk-dev-2.iam.gserviceaccount.com' | docker secret create firebase_client_cert_url -
+
+# AZURE TRANSLATOR
+echo 'UPd3xWP6AzyAcRS1Nno7YWx8vmA9Dx1gCnBrufdISHxoueeejBxoJQQJ99BAAC3pKaRXJ3w3AAAbACOG62Hd' | docker secret create azure_translator_key -
+echo 'eastasia' | docker secret create azure_translator_region -
+echo 'https://api.cognitive.microsofttranslator.com/translate' | docker secret create azure_translator_endpoint -
+
 ```bash
 # Database URLs
  echo "postgresql+asyncpg://kamronbek:kamronbek2003@<postgres_vps_ip>:5432/<postgres_db>" | docker secret create db_url -
