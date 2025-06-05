@@ -52,19 +52,19 @@ This guide contains all the commands needed to create Docker secrets for your ba
 echo './' | docker secret create pythonpath_env -
 
 # POSTGRES
-echo 'postgresql+asyncpg://kamronbek:kamronbek2003@localhost:5432/dev_db' | docker secret create database_url -
+echo 'postgresql+asyncpg://kamronbek:kamronbek2003@94.136.191.25:5432/dev_db' | docker secret create database_url -
 
 # REDIS
-echo 'redis://default:kamronbek2003@localhost:6379' | docker secret create redis_url -
-echo 'redis://default:kamronbek2003@localhost:6379/0?decode_responses=True&protocol=3' | docker secret create redis_url_old -
-echo 'redis://default:kamronbek2003@localhost:6379/1' | docker secret create taskiq_worker_url -
-echo 'redis://default:kamronbek2003@localhost:6379/2' | docker secret create taskiq_redis_schedule_source_url -
-echo 'redis://default:kamronbek2003@localhost:6379/3' | docker secret create taskiq_scheduler_url -
+echo 'redis://default:kamronbek2003@94.136.191.25:6379' | docker secret create redis_url -
+echo 'redis://default:kamronbek2003@94.136.191.25:6379/0?decode_responses=True&protocol=3' | docker secret create redis_url_old -
+echo 'redis://default:kamronbek2003@94.136.191.25:6379/1' | docker secret create taskiq_worker_url -
+echo 'redis://default:kamronbek2003@94.136.191.25:6379/2' | docker secret create taskiq_redis_schedule_source_url -
+echo 'redis://default:kamronbek2003@94.136.191.25:6379/3' | docker secret create taskiq_scheduler_url -
 
 # MINIO
 echo 'kamronbek' | docker secret create minio_root_user -
 echo 'kamronbek2003' | docker secret create minio_root_password -
-echo 'localhost:9000' | docker secret create minio_endpoint -
+echo '94.136.191.25:9000' | docker secret create minio_endpoint -
 echo 'dev-bucket' | docker secret create minio_bucket_name -
 
 # FASTAPI-JWT
